@@ -9,4 +9,3 @@ databaseChangeLog:
       file: db/changelog/1-004-create-shared-wishlist-table.yaml
   - include:
       file: db/changelog/1-005-create-reservation-history-table.yaml
-
