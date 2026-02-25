@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1-004-create-shared-wishlist-table
+      author: aliaksei.valiuk
+      changes:
+        - createTable:
+            tableName: shared_lists
+            columns:
+              - column:
+                  name: id
+                  type: SERIAL
+                  constraints:
+                    primaryKey: true
+              - column:
+                  name: wishlist_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_shared_wishlist
+                    references: wishlists(id)
+                    deleteCascade: true
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_shared_user
+                    references: users(id)
+                    deleteCascade: true
+#              double check if it is really needed
+              - column:
+                  name: can_edit
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+#              double check if it is really needed
+              - column:
+                  name: shared_at
+                  type: TIMESTAMP
+                  defaultValueComputed: NOW()
+        - addUniqueConstraint:
+            tableName: shared_lists
+            columnNames: wishlist_id, user_id
+            constraintName: uq_wishlist_user

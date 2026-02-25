@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/1-001-create-user-table.yaml
+  - include:
+      file: db/changelog/1-002-create-wishlist-table.yaml
+  - include:
+      file: db/changelog/1-003-create-item-table.yaml
+  - include:
+      file: db/changelog/1-004-create-shared-wishlist-table.yaml
+  - include:
+      file: db/changelog/1-005-create-reservation-history-table.yaml
