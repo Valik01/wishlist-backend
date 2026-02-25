@@ -4,7 +4,7 @@ databaseChangeLog:
       author: aliaksei.valiuk
       changes:
         - createTable:
-            tableName: user
+            tableName: users
             columns:
               - column:
                   name: id
@@ -26,6 +26,9 @@ databaseChangeLog:
               - column:
                   name: email
                   type: VARCHAR(255)
+              - column:
+                  name: locale
+                  type: VARCHAR(4)
               - column:
                   name: created_at
                   type: TIMESTAMP

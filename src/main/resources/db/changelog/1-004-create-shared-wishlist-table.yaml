@@ -39,5 +39,5 @@ databaseChangeLog:
                   defaultValueComputed: NOW()
         - addUniqueConstraint:
             tableName: shared_lists
-            columnNames: wishlist_id, shared_with_user_id
+            columnNames: wishlist_id, user_id
             constraintName: uq_wishlist_user

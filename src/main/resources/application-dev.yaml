@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: wishlist
+  datasource:
+    url: jdbc:postgresql://localhost:5432/wishlist
+    username: wishlist
+    password: wishlist
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    open-in-view: false
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/db.changelog-master.yaml
