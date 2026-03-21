@@ -13,6 +13,4 @@ public class TelegramAuthProperties {
 
     private String botToken;
 
-    private boolean mock;
-
 }

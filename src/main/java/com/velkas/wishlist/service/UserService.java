@@ -1,65 +1,32 @@
 package com.velkas.wishlist.service;
 
+import com.velkas.wishlist.mapper.UserMapper;
+import com.velkas.wishlist.model.dto.UserDto;
 import com.velkas.wishlist.model.entity.User;
-import com.velkas.wishlist.model.enums.Locale;
 import com.velkas.wishlist.model.telegram.TelegramUser;
 import com.velkas.wishlist.repository.UserRepository;
+import com.velkas.wishlist.service.telegram.TelegramAuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
+    private final TelegramAuthService telegramAuthService;
+    private final UserMapper userMapper;
     private final UserRepository userRepository;
 
-    public User getOrCreateUser(TelegramUser telegramUser) {
-        Long telegramId = telegramUser.getId();
-        LocalDateTime now = LocalDateTime.now();
+    public UserDto getOrCreateUser(String authorization) {
+        TelegramUser telegramUser = telegramAuthService.authenticate(authorization);
 
-        Optional<User> existing = userRepository.findByTelegramId(telegramId);
+        User user = userRepository.findByTelegramId(telegramUser.getId())
+            .map(tgUser -> {
+                userMapper.updateUser(tgUser, telegramUser);
+                return userRepository.save(tgUser);
+            })
+            .orElseGet(() -> userRepository.save(userMapper.toEntity(telegramUser)));
 
-        if (existing.isPresent()) {
-            User user = existing.get();
-            user.setUsername(telegramUser.getUsername());
-            user.setFirstName(telegramUser.getFirstName());
-            user.setLastName(telegramUser.getLastName());
-            user.setUpdatedAt(now);
-            return userRepository.save(user);
-        }
-
-        User newUser = User.builder()
-                .telegramId(telegramId)
-                .username(telegramUser.getUsername())
-                .firstName(telegramUser.getFirstName())
-                .lastName(telegramUser.getLastName())
-                .email(null)
-                .locale(resolveLocale(telegramUser.getLanguageCode()))
-                .createdAt(now)
-                .updatedAt(now)
-                .isActive(Boolean.TRUE)
-                .build();
-
-        return userRepository.save(newUser);
-    }
-
-    private Locale resolveLocale(String languageCode) {
-        if (languageCode == null || languageCode.isBlank()) {
-            return Locale.RU;
-        }
-
-        String normalized = languageCode.trim().toUpperCase(java.util.Locale.ROOT);
-        if (normalized.length() > 2) {
-            normalized = normalized.substring(0, 2);
-        }
-
-        try {
-            return Locale.valueOf(normalized);
-        } catch (IllegalArgumentException ex) {
-            return Locale.RU;
-        }
+        return userMapper.toDto(user);
     }
 }

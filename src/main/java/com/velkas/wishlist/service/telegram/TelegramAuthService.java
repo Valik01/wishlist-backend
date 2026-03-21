@@ -28,6 +28,7 @@ public class TelegramAuthService {
 
     public TelegramUser authenticate(String authorizationHeader) {
         String initData = extractInitDataFromHeader(authorizationHeader);
+
         verifyInitData(initData);
         return extractTelegramUser(initData);
     }
@@ -36,10 +37,6 @@ public class TelegramAuthService {
      * Verification of init data according to Telegram WebApp documentation.
      */
     public void verifyInitData(String initData) {
-        if (properties.isMock()) {
-            return;
-        }
-
         if (!StringUtils.hasText(properties.getBotToken())) {
             throw new IllegalStateException("Telegram bot token is not configured");
         }
@@ -52,10 +49,10 @@ public class TelegramAuthService {
         }
 
         String dataCheckString = data.entrySet().stream()
-                .filter(entry -> !TelegramAuthConstants.HASH_PARAM.equals(entry.getKey()))
-                .sorted(Comparator.comparing(Map.Entry::getKey))
-                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                .collect(Collectors.joining("\n"));
+            .filter(entry -> !TelegramAuthConstants.HASH_PARAM.equals(entry.getKey()))
+            .sorted(Comparator.comparing(Map.Entry::getKey))
+            .map(entry -> entry.getKey() + "=" + entry.getValue())
+            .collect(Collectors.joining("\n"));
 
         String expectedHash = calculateHash(dataCheckString, properties.getBotToken());
 
@@ -72,17 +69,6 @@ public class TelegramAuthService {
 
         String userJson = data.get(TelegramAuthConstants.USER_PARAM);
         if (!StringUtils.hasText(userJson)) {
-            if (properties.isMock()) {
-                return TelegramUser.builder()
-                        .id(1L)
-                        .firstName("Mock")
-                        .lastName("User")
-                        .username("mock_user")
-                        .languageCode("ru")
-                        .isPremium(Boolean.FALSE)
-                        .photoUrl(null)
-                        .build();
-            }
             throw new IllegalArgumentException("Telegram init data does not contain user information");
         }
 
@@ -95,15 +81,11 @@ public class TelegramAuthService {
 
     private String extractInitDataFromHeader(String authorizationHeader) {
         if (!StringUtils.hasText(authorizationHeader)) {
-            if (properties.isMock()) {
-                return "";
-            }
             throw new SecurityException("Missing Authorization header");
         }
 
         String value = authorizationHeader.trim();
 
-        // Support possible prefixes like "Bearer " or "TMA "
         for (String prefix : Arrays.asList("Bearer ", "TMA ")) {
             if (value.regionMatches(true, 0, prefix, 0, prefix.length())) {
                 return value.substring(prefix.length());
@@ -119,13 +101,13 @@ public class TelegramAuthService {
         }
 
         return Arrays.stream(initData.split("&"))
-                .map(pair -> pair.split("=", 2))
-                .filter(parts -> parts.length == 2)
-                .collect(Collectors.toMap(
-                        parts -> urlDecode(parts[0]),
-                        parts -> urlDecode(parts[1]),
-                        (first, second) -> second
-                ));
+            .map(pair -> pair.split("=", 2))
+            .filter(parts -> parts.length == 2)
+            .collect(Collectors.toMap(
+                parts -> urlDecode(parts[0]),
+                parts -> urlDecode(parts[1]),
+                (first, second) -> second
+            ));
     }
 
     private String urlDecode(String value) {
@@ -137,8 +119,10 @@ public class TelegramAuthService {
     }
 
     private String calculateHash(String dataCheckString, String botToken) {
-        byte[] secretKey = hmacSha256(TelegramAuthConstants.WEB_APP_DATA_SECRET.getBytes(StandardCharsets.UTF_8),
-                botToken.getBytes(StandardCharsets.UTF_8));
+        byte[] secretKey = hmacSha256(
+            TelegramAuthConstants.WEB_APP_DATA_SECRET.getBytes(StandardCharsets.UTF_8),
+            botToken.getBytes(StandardCharsets.UTF_8)
+        );
         byte[] hash = hmacSha256(secretKey, dataCheckString.getBytes(StandardCharsets.UTF_8));
         return bytesToHex(hash);
     }

@@ -9,4 +9,3 @@ spring:
 telegram:
   auth:
     bot-token: ${TELEGRAM_BOT_TOKEN:}
-    mock: false
