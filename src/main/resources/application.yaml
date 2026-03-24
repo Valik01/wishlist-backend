@@ -9,3 +9,9 @@ spring:
 telegram:
   auth:
     bot-token: ${TELEGRAM_BOT_TOKEN:}
+    auth-date-max-age-seconds: 300
+    auth-date-allowed-clock-skew-seconds: 60
+
+jwt:
+  secret: ${JWT_SECRET:changeme-please-use-at-least-32-bytes-for-hs256-key}
+  expiration: 43200000

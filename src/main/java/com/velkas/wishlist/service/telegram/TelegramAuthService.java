@@ -14,6 +14,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Map;
@@ -42,11 +43,10 @@ public class TelegramAuthService {
         }
 
         Map<String, String> data = parseInitData(initData);
-        String receivedHash = data.get(TelegramAuthConstants.HASH_PARAM);
+        requireMandatoryInitDataParams(data);
 
-        if (!StringUtils.hasText(receivedHash)) {
-            throw new SecurityException("Missing Telegram init data hash");
-        }
+        String receivedHash = data.get(TelegramAuthConstants.HASH_PARAM);
+        validateAuthDateFreshness(data.get(TelegramAuthConstants.AUTH_DATE_PARAM));
 
         String dataCheckString = data.entrySet().stream()
             .filter(entry -> !TelegramAuthConstants.HASH_PARAM.equals(entry.getKey()))
@@ -93,6 +93,38 @@ public class TelegramAuthService {
         }
 
         return value;
+    }
+
+    private void requireMandatoryInitDataParams(Map<String, String> data) {
+        if (!StringUtils.hasText(data.get(TelegramAuthConstants.HASH_PARAM))) {
+            throw new SecurityException("Telegram init data is missing required parameter: hash");
+        }
+        if (!StringUtils.hasText(data.get(TelegramAuthConstants.USER_PARAM))) {
+            throw new SecurityException("Telegram init data is missing required parameter: user");
+        }
+        if (!StringUtils.hasText(data.get(TelegramAuthConstants.AUTH_DATE_PARAM))) {
+            throw new SecurityException("Telegram init data is missing required parameter: auth_date");
+        }
+    }
+
+    private void validateAuthDateFreshness(String authDateRaw) {
+        long authEpoch;
+        try {
+            authEpoch = Long.parseLong(authDateRaw.trim());
+        } catch (NumberFormatException e) {
+            throw new SecurityException("Telegram init data auth_date must be a Unix timestamp in seconds");
+        }
+
+        long now = Instant.now().getEpochSecond();
+        long maxAge = properties.getAuthDateMaxAgeSeconds();
+        long skew = properties.getAuthDateAllowedClockSkewSeconds();
+
+        if (authEpoch > now + skew) {
+            throw new SecurityException("Telegram init data auth_date is in the future (beyond allowed clock skew of " + skew + "s)");
+        }
+        if (now - authEpoch > maxAge) {
+            throw new SecurityException("Telegram init data is stale: auth_date is older than " + maxAge + " seconds (replay protection)");
+        }
     }
 
     private Map<String, String> parseInitData(String initData) {

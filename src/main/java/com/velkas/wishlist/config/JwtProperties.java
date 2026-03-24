@@ -8,13 +8,11 @@ import org.springframework.stereotype.Component;
 @Getter
 @Setter
 @Component
-@ConfigurationProperties(prefix = "telegram.auth")
-public class TelegramAuthProperties {
+@ConfigurationProperties(prefix = "jwt")
+public class JwtProperties {
 
-    private String botToken;
+    private String secret;
 
-    private int authDateMaxAgeSeconds = 300;
-
-    private int authDateAllowedClockSkewSeconds = 60;
+    private long expiration;
 
 }
