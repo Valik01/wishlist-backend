@@ -1,0 +1,20 @@
+package com.velkas.wishlist.config;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
+
+@Getter
+@Setter
+@Component
+@ConfigurationProperties(prefix = "telegram.auth")
+public class TelegramAuthProperties {
+
+    private String botToken;
+
+    private int authDateMaxAgeSeconds = 300;
+
+    private int authDateAllowedClockSkewSeconds = 60;
+
+}
